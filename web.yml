@@ -1,0 +1,17 @@
+- name: Depoly website
+  hosts: all
+  become: true
+  gather_facts: yes
+# Roles  
+  roles:
+    - nginx   
+# Vars
+  vars:
+    site_name: test_site
+    ip_address: 192.168.1.110    
+    service_host: localhost
+    new_password: test12345
+    db_user: komis
+    db_passwd: test12345    
+  
+    

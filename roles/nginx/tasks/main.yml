@@ -1,0 +1,125 @@
+---
+- name: Install Nginx
+  apt:
+    name: "{{ packages }}"
+    update_cache: yes
+  vars:
+    packages:
+      - python3-pymysql      
+      - nginx
+      - mariadb-server
+      - php
+      - php-bcmath
+      - php-bz2
+      - php-intl
+      - php-gd
+      - php-mbstring
+      - php-mysql
+      - php-zip
+      - php-fpm
+  register: aptout
+- debug: var=aptout  
+- name: Remove "Apache2" package
+  apt:
+    name: apache2
+    state: absent        
+- name: Create Directory test
+  file:
+    path: /var/www/{{ site_name }}
+    state: directory
+- name: Stop MySQL
+  service: 
+    name: mysql 
+    state: stopped
+- name: set environment variables
+  shell: systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
+- name: Start MySQL
+  service: 
+    name: mysql 
+    state: started
+- name: Create a new database with name 'komis'
+  mysql_db:
+    name: komis
+    state: present
+- name: copy SQL
+  template:
+    src: komis.sql.j2
+    dest: /tmp/komis.sql    
+    #- name: Import file.sql similar to mysql -u <username> -p <password> < hostname.sql
+    #mysql_db:
+    #state: import
+    #name: all
+    #target: /tmp/komis.sql
+    #ignore_errors: yes
+    #register: sql
+    #- debug: var=sql
+- name: Stop MySQL
+  service:
+    name: mysql
+    state: stopped
+- name: set environment variables
+  shell: systemctl set-environment MYSQLD_OPTS=""
+- name: Start MySQL
+  service:
+    name: mysql
+    state: started
+- name: This command will create mysql user
+  shell:
+    cmd: mysql -e "CREATE USER 'komis'@'%' IDENTIFIED BY 'test12345';"
+  ignore_errors: yes  
+- name: grat priviliges on komis
+  shell:
+    cmd: mysql -e "GRANT ALL PRIVILEGES ON komis.* TO 'komis'@'%';"
+  ignore_errors: yes
+- name: flush  priviliges on komis
+  shell:
+    cmd: mysql -e "FLUSH PRIVILEGES;"
+  ignore_errors: yes
+- name: copy sql.cnf
+  template:
+    src: .my.cnf.j2 
+    dest: /root/.my.cnf   
+- name: Import file.sql similar to mysql -u <username> -p <password> < hostname.sql
+  mysql_db:
+    state: import
+    name: all
+    target: /tmp/komis.sql
+  ignore_errors: yes
+  register: sql
+- debug: var=sql
+  #- name: update mysql root password for all root accounts from local servers
+  # mysql_user: login_user=root login_password="" name=root host=localhost password={{ new_password }} priv=*.*:ALL,GRANT
+  #ignore_errors: yes
+- name: Add http nginx configuration
+  template: 
+    src: service.http.conf.j2 
+    dest: /etc/nginx/sites-available/default 
+    owner: root 
+    group: root 
+    mode: 0644
+- name: Create symbolic link 
+  file:
+   src: "/etc/nginx/sites-available/default"
+   dest: "/etc/nginx/sites-enabled/default"
+   state: link
+- name: Copy web-site
+  copy:
+    src: "{{ site_name }}"
+    dest: /var/www/
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+- name: enable MariaDB
+  systemd:
+    name: mariadb
+    state: started
+    enabled: True
+- name: enable Nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: True
+- name: Restart nginx
+  service:
+    name: nginx
+    state: restarted
