@@ -66,7 +66,7 @@
                 <tbody>
                     <tr>
                         <td><a href="kwerendy.txt"></td>
-                        <td><p>Januszex Company: Cofanie licznika w cenie!!!</p></td>
+                        <td><p>Januszex Company: TANIE SAMOCHODY!!!</p></td>
                         <td><img src="auto.png" alt="komis samochodowy"></td>
                     </tr>
                 </tbody>
