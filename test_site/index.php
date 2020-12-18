@@ -6,7 +6,7 @@
     </head>
     <body>
         <header>
-            <h1>KOMIS SAMOCHODOWY JANUSZEX</h1>
+            <h1>KOMIS SAMOCHODOWY Tomasz S</h1>
         </header>
         <div class="left">
             <h2>Wykaz samochodów</h2>
